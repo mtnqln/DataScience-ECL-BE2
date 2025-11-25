@@ -66,3 +66,13 @@ if __name__ == "__main__":
     print(f"Loaded {len(corpus)} documents in corpus")
     print(f"Loaded {len(queries)} queries")
     print(f"Loaded relevance for {len(qrels_valid)} queries (dataset)")
+
+    # Data exploration 
+    for qrel in qrels_valid.values():
+        print(f"Proportion d'articles pertinents : {sum(qrel.values())/len(qrel.values())}")
+
+    # Exemple de requete
+    requete_id = list(queries.keys())[0]
+    requete = queries[requete_id]
+    candidats = qrels_valid[requete_id]
+    print(f"Exemple de requete : \n{requete}\n et candidats : \n{candidats}\n")
