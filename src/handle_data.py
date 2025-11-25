@@ -1,27 +1,68 @@
+"""
+corpus.jsonl : le corpus lui-même, composé de plus de 25k articles scientifiques
+queries.jsonl : l'ensemble des documents qui constituent les requêtes qui seront adressées à notre moteur. Ces documents proviennent du corpus, mais il peut s'agir de documents qui ne sont que cités ou citent d'autres documents et pour lesquels on n'a que très peu d'information.
+valid.tsv : l'ensemble des données nécessaires pour entraîner et/ou tester votre moteur
+"""
+
 from typing import Dict
+import json
 
 
 def load_corpus(file_path: str) -> Dict[str, Dict]:
     """
-    TODO
-
     Load corpus data from JSONL file.
     Returns dictionary mapping document IDs to document data.
     """
-   
+    data = {}
+    with open(file=file_path) as f:
+        for line in f:
+            json_line: dict = json.loads(line)
+            id = json_line.pop("_id")
+            data[str(id)] = json_line
+    return data
+
+
 def load_queries(file_path: str) -> Dict[str, Dict]:
     """
-    TODO
-
     Load query data from JSONL file.
     Returns dictionary mapping query IDs to query data.
     """
-    
+    data = {}
+    with open(file=file_path) as f:
+        for line in f:
+            json_line: dict = json.loads(line)
+            id = json_line.pop("_id")
+            data[str(id)] = json_line
+    return data
+
 
 def load_qrels(file_path: str) -> Dict[str, Dict[str, int]]:
     """
-    TODO
-    
     Load relevance judgments from TSV file.
     Returns dictionary mapping query IDs to candidate relevance scores.
     """
+    data = {}
+    with open(file=file_path, mode="r", encoding="utf-8") as f:
+        next(f)
+        for line in f:
+            parts = line.strip().split("\t")
+            if len(parts) < 3:
+                continue
+            id, docid, score = parts[0], parts[1], parts[2]
+            if id not in data:
+                data[id] = {}
+            data[id][docid] = int(score)
+
+    return data
+
+
+if __name__ == "__main__":
+    # Load the dataset
+    print("Loading dataset...")
+    corpus = load_corpus("data/corpus.jsonl")
+    queries = load_queries("data/queries.jsonl")
+    qrels_valid = load_qrels("data/valid.tsv")
+
+    print(f"Loaded {len(corpus)} documents in corpus")
+    print(f"Loaded {len(queries)} queries")
+    print(f"Loaded relevance for {len(qrels_valid)} queries (dataset)")
