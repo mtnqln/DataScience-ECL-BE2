@@ -67,9 +67,11 @@ if __name__ == "__main__":
     print(f"Loaded {len(queries)} queries")
     print(f"Loaded relevance for {len(qrels_valid)} queries (dataset)")
 
-    # Data exploration 
+    # Data exploration
     for qrel in qrels_valid.values():
-        print(f"Proportion d'articles pertinents : {sum(qrel.values())/len(qrel.values())}")
+        print(
+            f"Proportion d'articles pertinents : {sum(qrel.values()) / len(qrel.values())}"
+        )
 
     # Exemple de requete
     requete_id = list(queries.keys())[0]
