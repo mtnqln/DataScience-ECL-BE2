@@ -21,6 +21,23 @@ def load_corpus(file_path: str) -> Dict[str, Dict]:
             data[str(id)] = json_line
     return data
 
+def load_corpus_title(file_path: str) -> Dict[str, str]:
+    data = {}
+    with open(file=file_path) as f:
+        for line in f:
+            json_line: dict = json.loads(line)
+            id = json_line.pop("_id")
+            data[str(id)] = json_line["title"]
+    return data
+
+def load_corpus_text(file_path: str) -> Dict[str, str]:
+    data = {}
+    with open(file=file_path) as f:
+        for line in f:
+            json_line: dict = json.loads(line)
+            id = json_line.pop("_id")
+            data[str(id)] = json_line["text"]
+    return data
 
 def load_queries(file_path: str) -> Dict[str, Dict]:
     """
