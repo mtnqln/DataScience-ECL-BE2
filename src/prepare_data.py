@@ -5,3 +5,6 @@ def vectorize_text_data(corpus):
     vectorizer = CountVectorizer()
     matrix = vectorizer.fit_transform(corpus)
     return  vectorizer, matrix
+
+if __name__ == "__main__":
+    pass
