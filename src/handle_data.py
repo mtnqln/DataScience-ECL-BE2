@@ -1,9 +1,3 @@
-"""
-corpus.jsonl : le corpus lui-même, composé de plus de 25k articles scientifiques
-queries.jsonl : l'ensemble des documents qui constituent les requêtes qui seront adressées à notre moteur. Ces documents proviennent du corpus, mais il peut s'agir de documents qui ne sont que cités ou citent d'autres documents et pour lesquels on n'a que très peu d'information.
-valid.tsv : l'ensemble des données nécessaires pour entraîner et/ou tester votre moteur
-"""
-
 from typing import Dict
 import json
 
@@ -52,7 +46,6 @@ def load_qrels(file_path: str) -> Dict[str, Dict[str, int]]:
             if id not in data:
                 data[id] = {}
             data[id][docid] = int(score)
-
     return data
 
 
@@ -60,6 +53,8 @@ if __name__ == "__main__":
     # Load the dataset
     print("Loading dataset...")
     corpus = load_corpus("data/corpus.jsonl")
+    first_corpus_id = list(corpus.keys())[0]
+    print(corpus[first_corpus_id])
     queries = load_queries("data/queries.jsonl")
     qrels_valid = load_qrels("data/valid.tsv")
 
@@ -68,10 +63,10 @@ if __name__ == "__main__":
     print(f"Loaded relevance for {len(qrels_valid)} queries (dataset)")
 
     # Data exploration
-    for qrel in qrels_valid.values():
-        print(
-            f"Proportion d'articles pertinents : {sum(qrel.values()) / len(qrel.values())}"
-        )
+    # for qrel in qrels_valid.values():
+    #     print(
+    #         f"Proportion d'articles pertinents : {sum(qrel.values()) / len(qrel.values())}"
+    #     )
 
     # Exemple de requete
     requete_id = list(queries.keys())[0]
