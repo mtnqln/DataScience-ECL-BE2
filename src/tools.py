@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from scipy.linalg import norm
 from IPython.core.display import HTML
+from IPython.display import display, HTML
 
 # des options permettent de limiter (ou non) le nombre de lignes/colonnes affichées
 # par exemple :
@@ -14,10 +15,10 @@ from IPython.core.display import HTML
 #   features : le vocabulaire
 #   top_n : le nombre de mots maximum à afficher
 def print_feats(v, features, top_n = 30):
-    _, ids, values = find(v)
+    _, ids, values = find(v) 
     feats = [(ids[i], values[i], features[ids[i]]) for i in range(len(list(ids)))]
     top_feats = sorted(feats, key=lambda x: x[1], reverse=True)[0:top_n]
-    return pd.DataFrame({"word" : [t[2] for t in top_feats], "value": [t[1] for t in top_feats]})   
+    return pd.DataFrame({"word" : [t[2] for t in top_feats], "value": [t[1] for t in top_feats]})
 
 # fonction qui permet d'afficher plusieurs tables pandas côte à côte (c'est cadeau)
 def display_side_by_side(dfs:list, captions:list):

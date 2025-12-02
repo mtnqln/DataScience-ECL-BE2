@@ -12,6 +12,7 @@ dependencies = [
     "pyperclip>=1.11.0",
     "pytest>=9.0.1",
     "scikit-learn>=1.7.2",
+    "sentence-transformers>=5.1.2",
 ]
 [tool.pytest.ini_options]
-pythonpath = ["."]
+pythonpath = [".", "src"]
