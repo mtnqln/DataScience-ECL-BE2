@@ -22,7 +22,7 @@ def vectorize_data(corpus_text):
     stop_words_list = list(ENGLISH_STOP_WORDS)
 
     # Pondération TF
-    vectorizer = CountVectorizer(stop_words=stop_words_list)
+    #vectorizer = CountVectorizer(stop_words=stop_words_list)
     # Pondération TFxIDF
     vectorizer = TfidfVectorizer(stop_words=stop_words_list)
 
