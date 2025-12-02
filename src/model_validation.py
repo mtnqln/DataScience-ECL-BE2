@@ -1,16 +1,17 @@
-from model import search_engine
-from prepare_data import vectorize_data, prepare_for_vectorizer
+from prepare_data import vectorize_data, vectorize_with_sentence_transformer
 from handle_data import load_corpus, load_queries, load_qrels
 
 from sklearn.metrics.pairwise import cosine_similarity
-from sklearn.metrics import precision_score, recall_score, f1_score, roc_auc_score
-import pandas as pd
+from sklearn.metrics import precision_score, recall_score, f1_score, roc_auc_score, precision_recall_curve
+from sentence_transformers import SentenceTransformer
 import numpy as np
+import os
 
-def validate_model(queries, corpus, valid):
-    corpus_text = prepare_for_vectorizer(corpus)
-    matrix, vectorizer = vectorize_data(corpus_text)
 
+def validate_model_creux(queries, corpus, valid):
+    matrix, vectorizer = vectorize_data(corpus)
+
+    corpus_ids = list(corpus.keys())
     all_true_labels = []
     all_pred_labels = []
     all_pred_continuous_labels = []
@@ -23,54 +24,75 @@ def validate_model(queries, corpus, valid):
 
         # Création des vecteurs des documents candidats
         query_candidates_id = valid[query_id].keys()
-        query_candidates = {key: corpus[key] for key in query_candidates_id}
-        query_candidates_text = prepare_for_vectorizer(query_candidates)
-        query_candidate_vectors = vectorizer.transform(query_candidates_text)
+        candidate_index = [corpus_ids.index(candidate_id) for candidate_id in query_candidates_id]
+        query_candidate_vectors = matrix[candidate_index]
 
         # Score de similarité entre la requête et les documents candidats
         similarity_matrix = cosine_similarity(query_vector, query_candidate_vectors)
         scores = similarity_matrix.flatten()
 
-        results_df = pd.DataFrame({
-            'id': query_candidates_id,
-            'score': scores,
-            'title': [corpus[id]['title'] for id in query_candidates_id]
-        })
+        # On choisit les 5 meilleurs scores
+        scores_sorted = np.sort(scores)[::-1]
+        best_scores = scores_sorted[:5]
 
-        # On choisit les 5 meilleurs scores 
-        top_5_indices = results_df['score'].nlargest(5).index
-        results_df['score_binaire'] = 0
-        results_df.loc[top_5_indices, 'score_binaire'] = 1
-
-        # On attribue les labels vrais et prédits
-        for candidate_id in query_candidates_id:
-            # # Titre du candidat
-            # print(corpus[candidate_id]['title'])
-            # # Vrai score
-            # print(valid[query_id][candidate_id])
-            # # Score binaire prédit
-            # print(results_df[results_df['id'] == candidate_id]['score_binaire'].values[0])
-            # # Score continu prédit
-            # print(results_df[results_df['id'] == candidate_id]['score'].values[0])
-
-            all_true_labels.append(valid[query_id][candidate_id])
-            all_pred_labels.append(results_df[results_df['id'] == candidate_id]['score_binaire'].values[0])
-            all_pred_continuous_labels.append(results_df[results_df['id'] == candidate_id]['score'].values[0])
+        all_true_labels.extend([valid[query_id][candidate_id] for candidate_id in query_candidates_id])
+        all_pred_continuous_labels.extend(scores)
+        all_pred_labels.extend([1 if score in best_scores else 0 for score in scores])
 
     # Calcul des métriques de performance de prédiction
-    y_true = np.array(all_true_labels)
-    y_pred = np.array(all_pred_labels)
-    y_pred_continuous = np.array(all_pred_continuous_labels)
+    precision = precision_score(np.array(all_true_labels), np.array(all_pred_labels), average='binary')
+    recall = recall_score(np.array(all_true_labels), np.array(all_pred_labels), average='binary')
+    f1 = f1_score(np.array(all_true_labels), np.array(all_pred_labels), average='binary')
+    auc_score = roc_auc_score(np.array(all_true_labels), np.array(all_pred_continuous_labels))
 
-    precision = precision_score(y_true, y_pred, average='binary')
-    recall = recall_score(y_true, y_pred, average='binary')
-    f1 = f1_score(y_true, y_pred, average='binary')
-    auc_score = roc_auc_score(y_true, y_pred_continuous)
+    print(f"Precision: {precision}\nRecall: {recall}\nF1 Score: {f1}\nAUC Score: {auc_score}")
 
-    print(f"Precision: {precision}")
-    print(f"Recall: {recall}")
-    print(f"F1 Score: {f1}")
-    print(f"AUC Score: {auc_score}")
+
+def validate_model_dense(queries, corpus, valid):
+    if "embeddings.npy" not in os.listdir("data"):
+        embeddings, model = vectorize_with_sentence_transformer(corpus)
+        np.save("data/embeddings.npy", embeddings)
+
+    embeddings = np.load("data/embeddings.npy")
+    model = SentenceTransformer('all-MiniLM-L6-v2')
+
+    corpus_ids = list(corpus.keys())
+    all_true_labels = []
+    all_pred_labels = []
+    all_pred_continuous_labels = []
+
+    for query_id in valid.keys():
+        # Création du vecteur de la requête
+        query = queries[query_id]
+        query_text = query['text']
+        query_vector = model.encode([query_text])
+
+        # Création des vecteurs des documents candidats
+        query_candidates_id = valid[query_id].keys()
+        candidate_index = [corpus_ids.index(candidate_id) for candidate_id in query_candidates_id]
+        query_candidate_vectors = embeddings[candidate_index]
+
+        # Score de similarité entre la requête et les documents candidats
+        similarity_matrix = cosine_similarity(query_vector, query_candidate_vectors)
+        scores = similarity_matrix.flatten()
+        
+        # On choisit les 5 meilleurs scores
+        scores_sorted = np.sort(scores)[::-1]
+        best_scores = scores_sorted[:5]
+
+        all_true_labels.extend([valid[query_id][candidate_id] for candidate_id in query_candidates_id])
+        all_pred_continuous_labels.extend(scores)
+
+        all_pred_labels.extend([1 if score in best_scores else 0 for score in scores])
+        # all_pred_labels.extend([1 if score >= 0.2799 else 0 for score in scores])
+
+    # Calcul des métriques de performance de prédiction
+    precision = precision_score(np.array(all_true_labels), np.array(all_pred_labels), average='binary')
+    recall = recall_score(np.array(all_true_labels), np.array(all_pred_labels), average='binary')
+    f1 = f1_score(np.array(all_true_labels), np.array(all_pred_labels), average='binary')
+    auc_score = roc_auc_score(np.array(all_true_labels), np.array(all_pred_continuous_labels))
+
+    print(f"Precision: {precision}\nRecall: {recall}\nF1 Score: {f1}\nAUC Score: {auc_score}")
 
 
 if __name__ == "__main__":
@@ -78,4 +100,4 @@ if __name__ == "__main__":
     queries = load_queries("data/queries.jsonl")
     qrels_valid = load_qrels("data/valid.tsv")
 
-    validate_model(queries, corpus, qrels_valid)
+    validate_model_dense(queries, corpus, qrels_valid)

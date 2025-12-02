@@ -13,10 +13,11 @@ def prepare_for_vectorizer(corpus):
     titles = [data['title'] for data in corpus.values()]
     text = [data['text'] for data in corpus.values()]
     for i in range(len(titles)):
-        titles[i] = titles[i] + text[i]
+        titles[i] = titles[i] + ' ' + text[i]
     return titles
 
-def vectorize_data(corpus_text):
+def vectorize_data(corpus):
+    corpus_text = prepare_for_vectorizer(corpus)
     # Supprime les mots trop fréquents (and, of, what...)
     stop_words_list = list(ENGLISH_STOP_WORDS)
 
@@ -28,7 +29,8 @@ def vectorize_data(corpus_text):
     matrix = vectorizer.fit_transform(corpus_text)
     return matrix, vectorizer
 
-def vectorize_with_sentence_transformer(corpus_text):
+def vectorize_with_sentence_transformer(corpus):
+    corpus_text = prepare_for_vectorizer(corpus)
     model = SentenceTransformer('all-MiniLM-L6-v2')
     matrix = model.encode(corpus_text)
     return matrix, model

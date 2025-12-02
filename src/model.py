@@ -9,17 +9,17 @@ import numpy as np
 def search_engine(query_text: str, corpus):
     corpus_text = prepare_for_vectorizer(corpus)
 
-    # matrix, vectorizer = vectorize_data(corpus_text)
-    # query_vector = vectorizer.transform([query_text])
-    # similarity_matrix = cosine_similarity(query_vector, matrix)
+    matrix, vectorizer = vectorize_data(corpus_text)
+    query_vector = vectorizer.transform([query_text])
+    similarity_matrix = cosine_similarity(query_vector, matrix)
 
-    embeddings, model = vectorize_with_sentence_transformer(corpus_text)
-    EMBEDDING_FILE = "data/embeddings.npy"
-    # np.save(EMBEDDING_FILE, embeddings)
-    embeddings = np.load(EMBEDDING_FILE)
+    # embeddings, model = vectorize_with_sentence_transformer(corpus_text)
+    # EMBEDDING_FILE = "data/embeddings.npy"
+    # # np.save(EMBEDDING_FILE, embeddings)
+    # embeddings = np.load(EMBEDDING_FILE)
 
-    query_vector = model.encode([query_text])
-    similarity_matrix = cosine_similarity(query_vector, embeddings)
+    # query_vector = model.encode([query_text])
+    # similarity_matrix = cosine_similarity(query_vector, embeddings)
 
     doc_ids = list(corpus.keys())
     scores = similarity_matrix.flatten()
@@ -45,5 +45,5 @@ def search_engine(query_text: str, corpus):
 
 if __name__ == "__main__":
     corpus = load_corpus("data/corpus.jsonl")
-    results = search_engine("cyber broccoli", corpus)
+    results = search_engine("direct search method", corpus)
     # print(results)
