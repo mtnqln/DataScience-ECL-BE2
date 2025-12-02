@@ -1,6 +1,6 @@
 from typing import Dict
 import json
-
+import pandas as pd
 
 def load_corpus(file_path: str) -> Dict[str, Dict]:
     """
@@ -52,7 +52,7 @@ def load_qrels(file_path: str) -> Dict[str, Dict[str, int]]:
 if __name__ == "__main__":
     # Load the dataset
     print("Loading dataset...")
-    corpus = load_corpus("data/corpus.jsonl")
+    corpus, df = load_corpus("data/corpus.jsonl")
     first_corpus_id = list(corpus.keys())[0]
     print(corpus[first_corpus_id])
     queries = load_queries("data/queries.jsonl")

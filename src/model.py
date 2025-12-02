@@ -3,22 +3,26 @@ from handle_data import load_corpus
 
 from sklearn.metrics.pairwise import cosine_similarity
 import pandas as pd
+import numpy as np
 
 
 def search_engine(query_text: str, corpus):
     corpus_text = prepare_for_vectorizer(corpus)
 
-    matrix, vectorizer = vectorize_data(corpus_text)
-    query_vector = vectorizer.transform([query_text])
+    # matrix, vectorizer = vectorize_data(corpus_text)
+    # query_vector = vectorizer.transform([query_text])
+    # similarity_matrix = cosine_similarity(query_vector, matrix)
 
-    # matrix, model = vectorize_with_sentence_transformer(corpus_text)
-    # query_vector = model.encode([query_text])
+    embeddings, model = vectorize_with_sentence_transformer(corpus_text)
+    EMBEDDING_FILE = "data/embeddings.npy"
+    # np.save(EMBEDDING_FILE, embeddings)
+    embeddings = np.load(EMBEDDING_FILE)
 
-    similarity_matrix = cosine_similarity(query_vector, matrix)
+    query_vector = model.encode([query_text])
+    similarity_matrix = cosine_similarity(query_vector, embeddings)
 
     doc_ids = list(corpus.keys())
     scores = similarity_matrix.flatten()
-
 
     # Créer un DataFrame pour combiner les IDs, scores et titres
     results_df = pd.DataFrame({

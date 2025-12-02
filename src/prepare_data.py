@@ -1,4 +1,4 @@
-from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -10,7 +10,6 @@ from tools import print_feats, display_side_by_side
 
 
 def prepare_for_vectorizer(corpus):
-
     titles = [data['title'] for data in corpus.values()]
     text = [data['text'] for data in corpus.values()]
     for i in range(len(titles)):
@@ -22,9 +21,9 @@ def vectorize_data(corpus_text):
     stop_words_list = list(ENGLISH_STOP_WORDS)
 
     # Pondération TF
-    vectorizer = CountVectorizer(stop_words=stop_words_list)
+    # vectorizer = CountVectorizer(stop_words=stop_words_list)
     # Pondération TFxIDF
-    # vectorizer = TfidfVectorizer(stop_words=stop_words_list)
+    vectorizer = TfidfVectorizer(stop_words=stop_words_list)
 
     matrix = vectorizer.fit_transform(corpus_text)
     return matrix, vectorizer
