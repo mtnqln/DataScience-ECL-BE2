@@ -10,7 +10,6 @@ from tools import print_feats, display_side_by_side
 
 
 def prepare_for_vectorizer(corpus):
-
     titles = [data['title'] for data in corpus.values()]
     text = [data['text'] for data in corpus.values()]
     for i in range(len(titles)):
