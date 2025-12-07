@@ -1,6 +1,6 @@
 from typing import Dict
 import json
-
+import pandas as pd
 
 def load_corpus(file_path: str) -> Dict[str, Dict]:
     """
@@ -56,6 +56,8 @@ if __name__ == "__main__":
     first_corpus_id = list(corpus.keys())[0]
     print(corpus[first_corpus_id])
     queries = load_queries("data/queries.jsonl")
+    first_queries_id = list(queries.keys())[0]
+    print(queries[first_queries_id])
     qrels_valid = load_qrels("data/valid.tsv")
 
     print(f"Loaded {len(corpus)} documents in corpus")
@@ -69,7 +71,7 @@ if __name__ == "__main__":
     #     )
 
     # Exemple de requete
-    requete_id = list(queries.keys())[0]
-    requete = queries[requete_id]
-    candidats = qrels_valid[requete_id]
-    print(f"Exemple de requete : \n{requete}\n et candidats : \n{candidats}\n")
+    # requete_id = list(queries.keys())[0]
+    # requete = queries[requete_id]
+    # candidats = qrels_valid[requete_id]
+    # print(f"Exemple de requete : \n{requete}\n et candidats : \n{candidats}\n")
