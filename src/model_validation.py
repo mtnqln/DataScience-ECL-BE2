@@ -106,10 +106,7 @@ def sample_prediction(queries, corpus, valid, model_type='dense'):
             valid.loc[(valid['query-id'] == query_id) & (valid['corpus-id'] == candidate_id), 'score'] = 1 if scores[i] in best_scores else 0
             # valid.loc[(valid['query-id'] == query_id) & (valid['corpus-id'] == candidate_id), 'score'] = scores[i]
     
-    # np.save('data/sample_submission_predicted.csv', valid)
     valid.to_csv('data/sample_submission_predicted.csv', index=False)
-    print(valid)
-    return valid
 
 
 if __name__ == "__main__":
