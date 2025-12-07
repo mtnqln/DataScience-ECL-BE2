@@ -48,6 +48,22 @@ def load_qrels(file_path: str) -> Dict[str, Dict[str, int]]:
             data[id][docid] = int(score)
     return data
 
+def load_sample_submission(file_path: str) -> Dict[str, Dict[str, int]]:
+    """
+    Load sample submission from CSV file.
+    Returns dictionary mapping query IDs to candidate relevance scores.
+    """
+    df = pd.read_csv(file_path)
+    data = {}
+    for _, row in df.iterrows():
+        id = str(row['query-id'])
+        docid = str(row['candidate_id'])
+        score = int(row['relevance'])
+        if id not in data:
+            data[id] = {}
+        data[id][docid] = score
+    return data
+
 
 if __name__ == "__main__":
     # Load the dataset
