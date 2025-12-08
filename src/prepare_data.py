@@ -106,8 +106,8 @@ def embeddings_dense(corpus):
     if "embeddings_2.npy" not in os.listdir("data"):
         corpus_text = prepare_for_vectorizer(corpus)
         print("Loading dense embeddings...")
-        # embeddings = model.encode(corpus_text)
-        embeddings = np.load("data/embeddings.npy")
+        embeddings = embedding_model.encode(corpus_text)
+        # embeddings = np.load("data/embeddings.npy")
 
         print("Calculating LDA features...")
         lda_features, lda_model, dico = get_lda_features(corpus_text)

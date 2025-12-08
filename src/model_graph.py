@@ -3,7 +3,7 @@ from handle_data import load_corpus
 import networkx as nx
 from networkx import DiGraph
 from utils import use_cache
-
+import numpy as np
 
 def build_graph(corpus:Dict[str,Dict])->DiGraph:
     G = DiGraph()
@@ -39,6 +39,38 @@ def calculate_centrality_indicator(g:DiGraph):
 
     return deg,bet,pr
 
+def improve_embedding(corpus_embeddings,G:nx.DiGraph,id_to_index):
+
+    graph_embeddings = np.copy(corpus_embeddings)
+
+    alpha = 0.5 
+
+    print("Calcul des représentations graphiques...")
+
+    for doc_id in G.nodes():
+        if doc_id in id_to_index:
+            current_idx = id_to_index[doc_id]
+            
+            neighbors = list(G.successors(doc_id))
+            
+            valid_neighbor_indices = []
+            for n in neighbors:
+                if n in id_to_index:
+                    valid_neighbor_indices.append(id_to_index[n])
+            
+            if len(valid_neighbor_indices) > 0:
+                neighbor_vectors = corpus_embeddings[valid_neighbor_indices]
+                
+                mean_neighbor_vec = np.mean(neighbor_vectors, axis=0)
+                
+                new_vec = (1 - alpha) * corpus_embeddings[current_idx] + alpha * mean_neighbor_vec
+                
+                graph_embeddings[current_idx] = new_vec
+
+    print("Nouveaux embeddings calculés !")
+    return graph_embeddings
+
+
 if __name__=="__main__":
     corpus: Dict[str, Dict] = load_corpus("data/corpus.jsonl")
     g = build_graph(corpus)
@@ -56,7 +88,6 @@ if __name__=="__main__":
     ### Indicateurs de centralites
     deg,bet,pr = calculate_centrality_indicator(g)
     print(f"Centralite deg : {deg}")
-    # print(f"Betweenness centrality : {bet}") 
     print(f"Page rank : {pr}")
 
     
