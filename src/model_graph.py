@@ -107,16 +107,13 @@ def improve_embedding(corpus_embeddings, G: nx.DiGraph, id_to_index, alpha=0.3, 
             graph_embeddings[current_idx] = new_vec
             nodes_improved += 1
 
-    print(f"Nouveaux embeddings calculés !")
-    print(f"  - Nœuds améliorés: {nodes_improved}/{len(G.nodes())}")
-    print(f"  - Nœuds avec références: {nodes_with_refs}")
-    print(f"  - Nœuds avec citations: {nodes_with_citations}")
+    print(f"Nouveaux embeddings calculés")
     
     return graph_embeddings
 
 
 def improve_embedding_advanced(corpus_embeddings, G: nx.DiGraph, id_to_index, 
-                               alpha=0.4, beta=0.3, use_pagerank=True, normalize_l2=True):
+                            alpha=0.4, beta=0.3, use_pagerank=True, normalize_l2=True):
     """
     Advanced version with L2 normalization and PageRank weighting.
     
