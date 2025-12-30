@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 Script pour optimiser les hyperparamètres du modèle graphe.
 Teste différentes configurations et génère les prédictions avec la meilleure.
@@ -15,14 +14,10 @@ from sklearn.metrics import precision_score, recall_score, f1_score, roc_auc_sco
 def evaluate_config(queries, corpus, valid, embeddings_func, config_name):
     """Evaluate a specific configuration on validation set."""
     
-    print(f"\n{'='*80}")
-    print(f"TESTING: {config_name}")
-    print(f"{'='*80}")
-    
-    # Get embeddings
+    # Embeddings
     embeddings, dico, lda_model, embedding_model = embeddings_dense(corpus)
     
-    # Build graph
+    # Graph
     g = build_graph(corpus=corpus)
     corpus_ids = list(corpus.keys())
     id_to_index = {doc_id: idx for idx, doc_id in enumerate(corpus_ids)}
@@ -80,51 +75,46 @@ def evaluate_config(queries, corpus, valid, embeddings_func, config_name):
     }
 
 def main():
-    print("="*80)
-    print("OPTIMISATION DES HYPERPARAMÈTRES")
-    print("="*80)
     
     # Load data
-    print("\nChargement des données...")
     corpus = load_corpus("data/corpus.jsonl")
     queries = load_queries("data/queries.jsonl")
     qrels_valid = load_qrels("data/valid.tsv")
-    print(f"✓ {len(corpus)} documents, {len(queries)} requêtes")
     
     # Test configurations
     configurations = [
         {
-            'name': 'Baseline (α=0.3, β=0.2)',
+            'name': 'Baseline (alpha=0.3, beta=0.2)',
             'func': lambda emb, g, idx: improve_embedding(emb, g, idx, alpha=0.3, beta=0.2)
         },
         {
-            'name': 'Higher weights (α=0.4, β=0.3)',
+            'name': 'Higher weights (alpha=0.4, beta=0.3)',
             'func': lambda emb, g, idx: improve_embedding(emb, g, idx, alpha=0.4, beta=0.3)
         },
         {
-            'name': 'More references (α=0.5, β=0.2)',
+            'name': 'More references (alpha=0.5, beta=0.2)',
             'func': lambda emb, g, idx: improve_embedding(emb, g, idx, alpha=0.5, beta=0.2)
         },
         {
-            'name': 'More citations (α=0.3, β=0.4)',
+            'name': 'More citations (alpha=0.3, beta=0.4)',
             'func': lambda emb, g, idx: improve_embedding(emb, g, idx, alpha=0.3, beta=0.4)
         },
         {
-            'name': 'Advanced (α=0.4, β=0.3, PageRank, L2)',
+            'name': 'Advanced (alpha=0.4, beta=0.3, PageRank, L2)',
             'func': lambda emb, g, idx: improve_embedding_advanced(emb, g, idx, alpha=0.4, beta=0.3, use_pagerank=True, normalize_l2=True)
         },
         {
-            'name': 'Advanced (α=0.5, β=0.3, PageRank, L2)',
+            'name': 'Advanced (alpha=0.5, beta=0.3, PageRank, L2)',
             'func': lambda emb, g, idx: improve_embedding_advanced(emb, g, idx, alpha=0.5, beta=0.3, use_pagerank=True, normalize_l2=True)
         },
         {
-            'name': 'Advanced (α=0.6, β=0.4, PageRank, L2)',
+            'name': 'Advanced (alpha=0.6, beta=0.4, PageRank, L2)',
             'func': lambda emb, g, idx: improve_embedding_advanced(emb, g, idx, alpha=0.6, beta=0.4, use_pagerank=True, normalize_l2=True)
         },
     ]
     
     results = []
-    
+    # On teste toutes les config dans configurations pour trouver la meilleur
     for config in configurations:
         try:
             result = evaluate_config(queries, corpus, qrels_valid, config['func'], config['name'])
@@ -134,7 +124,6 @@ def main():
             import traceback
             traceback.print_exc()
     
-    # Display results
     print("\n" + "="*80)
     print("RÉSULTATS COMPARATIFS")
     print("="*80)
@@ -155,8 +144,5 @@ def main():
     print(f"Recall: {best['recall']:.4f}")
     
     # Save results
-    df.to_csv('data/hyperparameter_optimization_results.csv', index=False)
-    print(f"\n✅ Résultats sauvegardés dans: data/hyperparameter_optimization_results.csv")
-
 if __name__ == "__main__":
     main()

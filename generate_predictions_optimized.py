@@ -12,8 +12,8 @@ from src.model_graph import build_graph, improve_embedding_advanced
 from sklearn.metrics.pairwise import cosine_similarity
 
 def generate_predictions_optimized(queries, corpus, valid, 
-                                   alpha=0.5, beta=0.3, 
-                                   use_pagerank=True, normalize_l2=True):
+                                alpha=0.5, beta=0.3, 
+                                use_pagerank=True, normalize_l2=True, output_file= None):
     """
     Génération des prédictions par graphe
     On inclut des poids liés à l'algorithme de page rank vu en cours
@@ -82,8 +82,9 @@ def generate_predictions_optimized(queries, corpus, valid,
             valid.loc[(valid['query-id'] == query_id) & (valid['corpus-id'] == candidate_id), 'score'] = \
                 1 if scores[j] in best_scores else 0
     
+    if output_file is None:
+        output_file = 'data/sample_submission_predicted_optimized.csv'
 
-    output_file = 'data/sample_submission_predicted_optimized.csv'
     valid.to_csv(output_file, index=False)
     
     
