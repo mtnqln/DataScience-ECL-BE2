@@ -1,5 +1,5 @@
-from prepare_data import vectorize_data, prepare_for_vectorizer, vectorize_with_sentence_transformer
-from handle_data import load_corpus
+from .prepare_data import vectorize_data, prepare_for_vectorizer, vectorize_with_sentence_transformer
+from .handle_data import load_corpus
 
 from sklearn.metrics.pairwise import cosine_similarity
 import pandas as pd

@@ -10,8 +10,8 @@ import matplotlib.pyplot as plt
 from sklearn.feature_extraction.text import ENGLISH_STOP_WORDS
 from sentence_transformers import SentenceTransformer
 
-from handle_data import load_corpus
-from tools import print_feats, display_side_by_side
+from .handle_data import load_corpus
+from .tools import print_feats, display_side_by_side
 
 
 def prepare_for_vectorizer(corpus):
