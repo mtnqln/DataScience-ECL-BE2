@@ -70,14 +70,11 @@ def validate_model(queries, corpus, valid, model_type='dense'):
     f1 = f1_score(np.array(all_true_labels), np.array(all_pred_labels), average='binary')
     auc_score = roc_auc_score(np.array(all_true_labels), np.array(all_pred_continuous_labels))
 
-    print(f"\n{'='*50}")
     print(f"BASE MODEL RESULTS ({model_type})")
-    print(f"{'='*50}")
     print(f"Precision: {precision:.4f}")
     print(f"Recall:    {recall:.4f}")
     print(f"F1 Score:  {f1:.4f}")
     print(f"AUC Score: {auc_score:.4f}")
-    print(f"{'='*50}\n")
     
     return {
         'precision': precision,
