@@ -115,5 +115,5 @@ if __name__ == "__main__":
     qrels_valid = load_qrels("data/valid.tsv")
     sample_prediction_data = pd.read_csv("data/sample_submission.csv")
 
-    # validate_model(queries, corpus, qrels_valid, model_type='dense')
+    #validate_model(queries, corpus, qrels_valid, model_type='dense')
     sample_prediction(queries, corpus, sample_prediction_data, model_type='dense')

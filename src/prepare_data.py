@@ -18,6 +18,7 @@ def prepare_for_vectorizer(corpus):
     titles = [data['title'] for data in corpus.values()]
     text = [data['text'] for data in corpus.values()]
     for i in range(len(titles)):
+        titles[i] = (titles[i] + ". ") * 5
         titles[i] = titles[i] + ' ' + text[i]
     return titles
 
@@ -99,22 +100,21 @@ def embedding_query_dense(query_text, dico, ldamodel, embedding_model):
     return query_vector
 
 
-def embeddings_dense(corpus):
+def embeddings_dense(corpus,overwrite=True):
     '''Calcule les embeddings d'un corpus en utilisant un modèle dense avec features LDA.'''
     embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
-
-    if "embeddings_2.npy" not in os.listdir("data"):
+    if "embeddings_2.npy" not in os.listdir("data") or overwrite:
         corpus_text = prepare_for_vectorizer(corpus)
         print("Loading dense embeddings...")
-        # embeddings = model.encode(corpus_text)
-        embeddings = np.load("data/embeddings.npy")
+        embeddings = embedding_model.encode(corpus_text)
+        #embeddings = np.load("data/embeddings.npy")
 
         print("Calculating LDA features...")
         lda_features, lda_model, dico = get_lda_features(corpus_text)
         embeddings_2 = np.concatenate((embeddings, lda_features), axis=1)
         print("Saving embeddings with LDA features...")
 
-        np.save("data/embeddings_2.npy", embeddings_2)
+        np.save("data/embeddings_3.npy", embeddings_2)
     else:
         corpus_text = prepare_for_vectorizer(corpus)
         lda_features, lda_model, dico = get_lda_features(corpus_text)
