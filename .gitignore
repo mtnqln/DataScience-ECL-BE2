@@ -17,3 +17,9 @@ uv.lock
 
 # Graphe cache
 graphe_cache.txt 
+
+#settings
+.vscode/
+
+#.pytest_cache
+.pytest_cache/
