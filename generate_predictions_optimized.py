@@ -105,16 +105,15 @@ def main():
     print(f"{len(queries)} requêtes")
     print(f"{len(sample_submission)} lignes à prédire")
     
-    # Generate predictions with optimized parameters
-    # Ces valeurs sont basées sur l'optimisation
+
     predictions = generate_predictions_optimized(
         queries=queries,
         corpus=corpus,
         valid=sample_submission.copy(),
-        alpha=0.5,  # Optimisé (au lieu de 0.3)
-        beta=0.3,   # Optimisé (au lieu de 0.2)
-        use_pagerank=True,  # Nouveau!
-        normalize_l2=True   # Nouveau!
+        alpha=0.5,
+        beta=0.3,
+        use_pagerank=True,
+        normalize_l2=True 
     )
     
 
