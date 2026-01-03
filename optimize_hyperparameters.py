@@ -120,13 +120,11 @@ def main():
             result = evaluate_config(queries, corpus, qrels_valid, config['func'], config['name'])
             results.append(result)
         except Exception as e:
-            print(f"✗ Erreur pour {config['name']}: {e}")
+            print(f"Erreur pour {config['name']}: {e}")
             import traceback
             traceback.print_exc()
     
-    print("\n" + "="*80)
     print("RÉSULTATS COMPARATIFS")
-    print("="*80)
     
     df = pd.DataFrame(results)
     df = df.sort_values('f1', ascending=False)
@@ -134,9 +132,7 @@ def main():
     
     # Best configuration
     best = df.iloc[0]
-    print("\n" + "="*80)
     print("MEILLEURE CONFIGURATION")
-    print("="*80)
     print(f"Configuration: {best['config']}")
     print(f"F1 Score: {best['f1']:.4f}")
     print(f"AUC: {best['auc']:.4f}")

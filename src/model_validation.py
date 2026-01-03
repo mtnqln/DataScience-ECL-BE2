@@ -293,7 +293,7 @@ def sample_prediction_graph(queries, corpus, valid, model_type='dense'):
     
     output_file = 'data/sample_submission_predicted.csv'
     valid.to_csv(output_file, index=False)
-    print(f"\n✅ Predictions saved to: {output_file}")
+    print(f"Predictions saved to: {output_file}")
     
     return valid
 

@@ -74,53 +74,42 @@ def embeddings_creux(corpus):
     corpus_text = prepare_for_vectorizer(corpus)
     corpus_text_processed = list(sent_to_words(corpus_text))
     corpus_text_processed = remove_stopwords(corpus_text_processed)
+    
+    # Re-join tokens into strings for TfidfVectorizer
+    corpus_text_final = [" ".join(doc) for doc in corpus_text_processed]
 
     # Pondération TF
     # model = CountVectorizer()
     # Pondération TFxIDF
     model = TfidfVectorizer()
-    matrix = model.fit_transform(corpus_text_processed)
+    matrix = model.fit_transform(corpus_text_final)
 
     return matrix, model
 
 def embedding_query_dense(query_text, dico, ldamodel, embedding_model):
-    '''Calcule le vecteur d'une requête en utilisant le modèle dense avec features LDA.'''
-    query_vector_dense = embedding_model.encode([query_text])
-    query_tokens = list(simple_preprocess(query_text, deacc=True))
-    bow_query = dico.doc2bow(query_tokens)
-    
-    doc_topics = ldamodel.get_document_topics(bow_query, minimum_probability=0)
-    
-    query_vector_lda = np.zeros((1, ldamodel.num_topics))
-    for topic_id, prob in doc_topics:
-        query_vector_lda[0, topic_id] = prob
-        
-    query_vector = np.concatenate((query_vector_dense, query_vector_lda), axis=1)
+    '''Calcule le vecteur d'une requête en utilisant le modèle dense UNIQUEMENT (LDA désactivé).'''
+    query_vector = embedding_model.encode([query_text])
     return query_vector
 
 
 def embeddings_dense(corpus):
-    '''Calcule les embeddings d'un corpus en utilisant un modèle dense avec features LDA.'''
+    '''Calcule les embeddings d'un corpus en utilisant un modèle dense (LDA désactivé).'''
     embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
 
-    if "embeddings_2.npy" not in os.listdir("data"):
+    if "embeddings_dense_only.npy" not in os.listdir("data"):
         corpus_text = prepare_for_vectorizer(corpus)
         print("Loading dense embeddings...")
         embeddings = embedding_model.encode(corpus_text)
-        # embeddings = np.load("data/embeddings.npy")
-
-        print("Calculating LDA features...")
-        lda_features, lda_model, dico = get_lda_features(corpus_text)
-        embeddings_2 = np.concatenate((embeddings, lda_features), axis=1)
-        print("Saving embeddings with LDA features...")
-
-        np.save("data/embeddings_2.npy", embeddings_2)
+        
+        print("Saving dense embeddings...")
+        np.save("data/embeddings_dense_only.npy", embeddings)
     else:
-        corpus_text = prepare_for_vectorizer(corpus)
-        lda_features, lda_model, dico = get_lda_features(corpus_text)
-        embeddings_2 = np.load("data/embeddings_2.npy")
+        # corpus_text = prepare_for_vectorizer(corpus) # Optimization: don't prep text if loading
+        embeddings = np.load("data/embeddings_dense_only.npy")
 
-    return embeddings_2, dico, lda_model, embedding_model
+    # Return None for dico and lda_model to maintain signature compatibility 
+    # but indicate they are not used.
+    return embeddings, None, None, embedding_model
 
 
 def cosine_similarity_matrix(matrix):

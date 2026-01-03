@@ -23,3 +23,5 @@ graphe_cache.txt
 
 #.pytest_cache
 .pytest_cache/
+
+word_frequency_distribution.png

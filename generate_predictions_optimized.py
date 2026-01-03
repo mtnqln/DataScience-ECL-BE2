@@ -111,10 +111,10 @@ def main():
         queries=queries,
         corpus=corpus,
         valid=sample_submission.copy(),
-        alpha=0.5,
-        beta=0.3,
-        use_pagerank=True,
-        normalize_l2=True 
+        alpha=0.3,
+        beta=0.4,
+        use_pagerank=False,
+        normalize_l2=False 
     )
     
 
