@@ -83,7 +83,7 @@ def generate_predictions_optimized(queries, corpus, valid,
                 1 if scores[j] in best_scores else 0
     
     if output_file is None:
-        output_file = 'data/sample_submission_predicted_optimized.csv'
+        output_file = 'submissions/sample_submission_predicted_optimized.csv'
 
     valid.to_csv(output_file, index=False)
     
@@ -111,8 +111,8 @@ def main():
         queries=queries,
         corpus=corpus,
         valid=sample_submission.copy(),
-        alpha=0.3,
-        beta=0.4,
+        alpha=0,
+        beta=1,
         use_pagerank=False,
         normalize_l2=False 
     )

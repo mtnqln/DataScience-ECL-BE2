@@ -1,6 +1,7 @@
 from src.handle_data import load_corpus, load_queries
 from generate_predictions_optimized import generate_predictions_optimized
 import pandas as pd
+import os
 
 # Ce code main permet de générer le fichier
 def main(ouput_file=None):
@@ -17,8 +18,8 @@ def main(ouput_file=None):
         queries=queries,
         corpus=corpus,
         valid=sample_submission.copy(),
-        alpha=0.5,
-        beta=0.3,
+        alpha=0,
+        beta=1,
         use_pagerank=True,
         normalize_l2=True,
         output_file=ouput_file
@@ -26,4 +27,5 @@ def main(ouput_file=None):
     
 if __name__ == "__main__":
     ouput_file = input("nom du fichier d'output: ")
+    ouput_file = os.path.join("submissions", ouput_file)
     main(ouput_file)

@@ -111,6 +111,30 @@ def main():
             'name': 'Advanced (alpha=0.6, beta=0.4, PageRank, L2)',
             'func': lambda emb, g, idx: improve_embedding_advanced(emb, g, idx, alpha=0.6, beta=0.4, use_pagerank=True, normalize_l2=True)
         },
+        {
+            'name': 'Unidirectional (alpha=0, beta=0.6)',
+            'func': lambda emb, g, idx: improve_embedding(emb, g, idx, alpha=0, beta=0.6)
+        },
+        {
+            'name': 'Unidirectional (alpha=0, beta=0.8)',
+            'func': lambda emb, g, idx: improve_embedding(emb, g, idx, alpha=0, beta=0.8)
+        },
+        {
+            'name': 'Unidirectional (alpha=0, beta=1.0)',
+            'func': lambda emb, g, idx: improve_embedding(emb, g, idx, alpha=0, beta=1.0)
+        },
+        {
+            'name': 'Uni Advanced (alpha=0, beta=0.6, PR, L2)',
+            'func': lambda emb, g, idx: improve_embedding_advanced(emb, g, idx, alpha=0, beta=0.6, use_pagerank=True, normalize_l2=True)
+        },
+        {
+            'name': 'Uni Advanced (alpha=0, beta=0.8, PR, L2)',
+            'func': lambda emb, g, idx: improve_embedding_advanced(emb, g, idx, alpha=0, beta=0.8, use_pagerank=True, normalize_l2=True)
+        },
+        {
+            'name': 'Uni Advanced (alpha=0, beta=1.0, PR, L2)',
+            'func': lambda emb, g, idx: improve_embedding_advanced(emb, g, idx, alpha=0, beta=1.0, use_pagerank=True, normalize_l2=True)
+        },
     ]
     
     results = []

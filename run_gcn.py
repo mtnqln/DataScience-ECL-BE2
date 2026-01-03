@@ -61,8 +61,7 @@ def run_gcn_pipeline():
         query_text = query['text']
         
         # Pour la requête, on commence par son embedding dense
-        # Si la requête est DANS le graphe, on prend son embedding lissé !
-        # C'est un avantage majeur du GCN.
+        # Si la requête est dans le graphe, on prend son embedding lissé 
         
         if query_id in id_to_index:
             query_idx = id_to_index[query_id]
@@ -70,11 +69,8 @@ def run_gcn_pipeline():
         else:
             # Sinon (cas rare/impossible dans valid?), on prend le dense pur
             query_vector = embedding_query_dense(query_text, None, None, embedding_model)
-            # Et on pourrait potentiellement le lisser avec ses voisins connus... 
         
-        # Candidats
         candidates_ids = list(valid[query_id].keys())
-        # Filtrer ceux qui sont dans le corpus (par sécurité)
         candidates_ids = [cid for cid in candidates_ids if cid in id_to_index]
         
         if not candidates_ids:
@@ -87,7 +83,7 @@ def run_gcn_pipeline():
         sims = cosine_similarity(query_vector, cand_vectors).flatten()
         
         # Ranking
-        top5_indices = np.argsort(sims)[-5:] # indices dans sims/candidates_ids
+        top5_indices = np.argsort(sims)[-5:]
         top5_ids = [candidates_ids[i] for i in top5_indices]
         
         # Metrics accumulation
@@ -111,20 +107,15 @@ def run_gcn_pipeline():
     print(f"F1 Score: {f1:.4f}")
     print(f"AUC:      {auc:.4f}")
     
-    # 7. Génération du fichier de soumission basé sur sample_submission.csv
     print("\nGénération du fichier de soumission 'data/sample_submission_gcn.csv'...")
-    try:
-        submission_df = pd.read_csv("data/sample_submission.csv")
-        print(f"Chargé sample_submission.csv avec {len(submission_df)} lignes")
-    except FileNotFoundError:
-        print("Erreur: data/sample_submission.csv non trouvé. Impossible de générer la soumission kaggle.")
-        return f1, auc
+    
+    # Construction de la soumission basée sur les paires dans valid
+    submission_rows = []
+    queries_ids = list(valid.keys())
+    print(f"Prédictions pour {len(queries_ids)} requêtes...")
 
-    
-    queries_ids = submission_df['query-id'].unique()
-    print(f"Prédictions pour {len(queries_ids)} requêtes uniques dans le fichier de soumission...")
-    
-    for i, qid in enumerate(queries_ids):
+    for qid in queries_ids:
+        # 1. Get query vector
         if str(qid) in queries:
             query_text = queries[str(qid)]['text']
             
@@ -136,11 +127,12 @@ def run_gcn_pipeline():
         else:
              continue
              
-        mask = submission_df['query-id'] == qid
-        candidates = submission_df[mask]['corpus-id'].tolist()
+        # 2. Get candidates for this query from valid dict
+        candidates = list(valid[qid].keys())
         
+        # 3. Get candidate vectors
         valid_cands_idx = []
-        valid_cands_pos = []
+        valid_cands_pos = [] 
         
         for pos, cid in enumerate(candidates):
             if cid in id_to_index:
@@ -148,29 +140,36 @@ def run_gcn_pipeline():
                 valid_cands_pos.append(pos)
                 
         if not valid_cands_idx:
+            for cid in candidates:
+                submission_rows.append({'query-id': qid, 'corpus-id': cid, 'score': 0})
             continue
             
         cand_vecs = embeddings_final[valid_cands_idx]
-        
         sims = cosine_similarity(q_vec, cand_vecs).flatten()
         
-        
+        # 5. Determine top 5
         sorted_indices_local = np.argsort(sims)[::-1]
-        
         top5_local_indices = sorted_indices_local[:5]
-        
         top5_positions = [valid_cands_pos[idx] for idx in top5_local_indices]
         
-        row_indices = submission_df[mask].index
-        
-        submission_df.loc[row_indices, 'score'] = 0
-        
+        # 6. Store results
+        current_scores = {cid: 0 for cid in candidates}
         for pos in top5_positions:
-            submission_df.loc[row_indices[pos], 'score'] = 1
+            current_scores[candidates[pos]] = 1
+            
+        for cid in candidates:
+             submission_rows.append({'query-id': qid, 'corpus-id': cid, 'score': current_scores[cid]})
 
-    output_file = "data/sample_submission_gcn.csv"
+    submission_df = pd.DataFrame(submission_rows)
+    # Ajout de RowId
+    submission_df.insert(0, 'RowId', range(len(submission_df)))
+    # Vérification colonnes
+    submission_df = submission_df[['RowId', 'query-id', 'corpus-id', 'score']]
+
+    output_file = "submissions/sample_submission_gcn.csv"
     submission_df.to_csv(output_file, index=False)
     print(f"Fichier sauvegardé avec succès: {output_file}")
+    print(f"Colonnes générées : {list(submission_df.columns)}")
     
     return f1, auc
 
