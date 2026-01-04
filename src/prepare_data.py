@@ -102,10 +102,10 @@ def embeddings_dense(corpus):
         embeddings = embedding_model.encode(corpus_text)
         
         print("Saving dense embeddings...")
-        np.save("data/embeddings_dense_only.npy", embeddings)
+        np.save("embeddings/embeddings_dense_only.npy", embeddings)
     else:
         # corpus_text = prepare_for_vectorizer(corpus) # Optimization: don't prep text if loading
-        embeddings = np.load("data/embeddings_dense_only.npy")
+        embeddings = np.load("embeddings/embeddings_dense_only.npy")
 
     # Return None for dico and lda_model to maintain signature compatibility 
     # but indicate they are not used.
