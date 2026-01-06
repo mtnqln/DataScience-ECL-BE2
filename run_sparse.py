@@ -7,7 +7,7 @@ from src.handle_data import load_corpus, load_queries, load_qrels
 from src.prepare_data import embeddings_creux, embedding_query_dense
 
 def run_sparse_model():
-   """script qui run la methode creuse"""
+    """script qui run la methode creuse"""
     
     corpus = load_corpus("data/corpus.jsonl")
     queries = load_queries("data/queries.jsonl")
@@ -56,7 +56,7 @@ def run_sparse_model():
                  submission_rows.append({'query-id': qid, 'corpus-id': cid, 'score': 0})
             continue
             
-        cand_matrix = matrix[candidates_idx]
+        cand_matrix = matrix[candidates_idx] # type: ignore
         
         sims = cosine_similarity(q_vec, cand_matrix).flatten()
         
