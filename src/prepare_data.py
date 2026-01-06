@@ -96,7 +96,7 @@ def embeddings_dense(corpus):
     '''Calcule les embeddings d'un corpus en utilisant un modèle dense (LDA désactivé).'''
     embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
 
-    if "embeddings_dense_only.npy" not in os.listdir("data"):
+    if "embeddings_dense_only.npy" not in os.listdir("embeddings"):
         corpus_text = prepare_for_vectorizer(corpus)
         print("Loading dense embeddings...")
         embeddings = embedding_model.encode(corpus_text)
