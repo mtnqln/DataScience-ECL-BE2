@@ -7,7 +7,7 @@ from src.handle_data import load_corpus, load_queries, load_qrels
 from src.prepare_data import embeddings_creux, embedding_query_dense
 
 def run_sparse_model():
-   """script qui run la methode creuse"""
+    """script qui run la methode creuse"""
     
     corpus = load_corpus("data/corpus.jsonl")
     queries = load_queries("data/queries.jsonl")
@@ -56,7 +56,7 @@ def run_sparse_model():
                  submission_rows.append({'query-id': qid, 'corpus-id': cid, 'score': 0})
             continue
             
-        cand_matrix = matrix[candidates_idx]
+        cand_matrix = matrix[candidates_idx] # type: ignore
         
         sims = cosine_similarity(q_vec, cand_matrix).flatten()
         
@@ -78,17 +78,10 @@ def run_sparse_model():
             all_pred_continuous.append(score)
             all_pred_labels.append(pred_label)
             
-        # Submission generation - Utiliser les scores continus
-        # Créer un dictionnaire des scores pour tous les candidats
-        current_scores = {}
-        for i, idx_in_subset in enumerate(candidates_idx):
-            cid = corpus_ids[idx_in_subset] 
-            current_scores[cid] = sims[i]  # Garder les valeurs de similarité cosinus
-            
-        # Ajouter aussi les candidats qui n'étaient pas dans l'index avec score=0
-        for cid in candidates:
-            if cid not in current_scores:
-                current_scores[cid] = 0.0
+        # Submission generation
+        current_scores = {cid: 0 for cid in candidates}
+        for p in top5_positions:
+            current_scores[candidates[p]] = 1
             
         for cid in candidates:
              submission_rows.append({
