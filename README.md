@@ -21,7 +21,7 @@ COMMENT UTILISER LE PROGRAMME (GENERER UNE SOUMISSION)
 **Pour lancer le generateur avec les reglages par defaut :**
 
 - Ouvrez un terminal
-- Tapez : python main.py
+- Tapez : python main.py (main va utiliser generate_predictions_optimized.py)
 - Le programme va vous demander le nom du fichier de sortie (ex: ma_soumission)
 - Le fichier sera cree dans le dossier "submissions/"
 
