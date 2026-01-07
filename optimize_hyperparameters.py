@@ -66,7 +66,7 @@ def evaluate_config(queries, corpus, valid, embeddings_func, config_name):
     print(f"  Recall:       {recall:.4f}")
     print(f"  F1 Score:     {f1:.4f}")
     print(f"  AUC (Prob):   {auc_continuous:.4f}")
-    print(f"  AUC (Kaggle): {auc_binary:.4f}")
+    print(f"  AUC (Binaire): {auc_binary:.4f}")
     
     return {
         'config': config_name,
@@ -162,7 +162,7 @@ def main():
     print("MEILLEURE CONFIGURATION (Selon AUC Kaggle)")
     print(f"Configuration: {best['config']}")
     print(f"F1 Score:      {best['f1']:.4f}")
-    print(f"AUC (Kaggle):  {best['auc_kaggle']:.4f}")
+    print(f"AUC (Binaire):  {best['auc_kaggle']:.4f}")
     print(f"AUC (Prob):    {best['auc_prob']:.4f}")
     print(f"Precision:     {best['precision']:.4f}")
     print(f"Recall:        {best['recall']:.4f}")

@@ -49,7 +49,7 @@ class SimpleGCN(nn.Module):
         
         adj_coo = coo_matrix((values, (edges[0], edges[1])), shape=(num_nodes, num_nodes))
         
-        # Normalisation D^-1/2 A D^-1/2
+        # Normalisation
         rowsum = np.array(adj_coo.sum(1))
         d_inv_sqrt = np.power(rowsum, -0.5).flatten()
         d_inv_sqrt[np.isinf(d_inv_sqrt)] = 0.
@@ -73,9 +73,5 @@ class SimpleGCN(nn.Module):
         """
         x = features
         for i in range(k):
-            # Sparse Matrix Multiplication: A * X
-            # torch.sparse.mm ne supporte que sparse * dense
             x = torch.sparse.mm(adj, x)
-            # On pourrait ajouter une non-linéarité ici si on avait des poids (ReLU, etc.)
-            # Mais pour du SGC (Simple Graph Convolution), la linearité est souvent optimale pour le lissage
         return x

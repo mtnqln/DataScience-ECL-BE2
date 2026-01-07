@@ -101,7 +101,7 @@ def run_dense_model():
     print("="*50)
     print(f"F1 Score:       {f1:.4f}")
     print(f"AUC (Prob):     {auc_continuous:.4f}")
-    print(f"AUC (Kaggle):   {auc_binary:.4f}")
+    print(f"AUC (Binaire):   {auc_binary:.4f}")
     
     submission_df = pd.DataFrame(submission_rows)
     submission_df.insert(0, 'RowId', range(len(submission_df)))

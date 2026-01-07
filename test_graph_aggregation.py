@@ -73,7 +73,7 @@ def evaluate_graph_config(queries, corpus, valid, embeddings_func, config_name, 
     print(f"\nRésultats:")
     print(f"  F1 Score:     {f1:.4f}")
     print(f"  AUC (Prob):   {auc_continuous:.4f}")
-    print(f"  AUC (Kaggle): {auc_binary:.4f} ⭐")
+    print(f"  AUC (Binaire): {auc_binary:.4f} ⭐")
     
     return {
         'config': config_name,
@@ -272,7 +272,7 @@ def main():
     
     for i, row in df.head(3).iterrows():
         print(f"\n#{df.index.get_loc(i) + 1}. {row['config']}")
-        print(f"   AUC (Kaggle): {row['auc_kaggle']:.4f}")
+        print(f"   AUC (Binaire): {row['auc_kaggle']:.4f}")
         print(f"   F1 Score:     {row['f1']:.4f}")
         print(f"   Paramètres:")
         print(f"     - method: {row.get('method', 'N/A')}")

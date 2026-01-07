@@ -115,7 +115,7 @@ def run_gcn_pipeline():
     print(f"RÉSULTATS GCN + PageRank Boost (k={k_hops})")
     print(f"F1 Score:       {f1:.4f}")
     print(f"AUC (Prob):     {auc_continuous:.4f} (Potentiel max)")
-    print(f"AUC (Kaggle):   {auc_binary:.4f} (Estimation sur 0/1)")
+    print(f"AUC (Binaire):   {auc_binary:.4f} (Estimation sur 0/1)")
     
     print(f"\nGénération des prédictions pour {len(sample_submission['query-id'].unique())} requêtes de test...")
     
@@ -152,17 +152,14 @@ def run_gcn_pipeline():
         best_scores = scores_sorted[:5]
         
         # Mise à jour des scores dans le DataFrame de soumission
-        # On utilise les scores CONTINUS (similarité cosinus avec boost PageRank) au lieu de binaire (0/1)
         for j, candidate_id in enumerate(query_candidates_id):
             sample_submission.loc[(sample_submission['query-id'] == query_id) & (sample_submission['corpus-id'] == candidate_id), 'score'] = \
-                final_scores[j]  # Garder les valeurs continues de similarité
+                final_scores[j]  
 
     output_file = "submissions/sample_submission_gcn.csv"
     sample_submission.to_csv(output_file, index=False)
     print(f"\nFichier sauvegardé: {output_file}")
     print(f"Total de prédictions: {len(sample_submission)}")
-    print(f"Prédictions positives (score=1): {(sample_submission['score'] == 1).sum()}")
-    print(f"Prédictions négatives (score=0): {(sample_submission['score'] == 0).sum()}")
     
     return f1, auc_binary, auc_continuous
 
