@@ -78,10 +78,17 @@ def run_sparse_model():
             all_pred_continuous.append(score)
             all_pred_labels.append(pred_label)
             
-        # Submission generation
-        current_scores = {cid: 0 for cid in candidates}
-        for p in top5_positions:
-            current_scores[candidates[p]] = 1
+        # Submission generation - Utiliser les scores continus
+        # Créer un dictionnaire des scores pour tous les candidats
+        current_scores = {}
+        for i, idx_in_subset in enumerate(candidates_idx):
+            cid = corpus_ids[idx_in_subset] 
+            current_scores[cid] = sims[i]  # Garder les valeurs de similarité cosinus
+            
+        # Ajouter aussi les candidats qui n'étaient pas dans l'index avec score=0
+        for cid in candidates:
+            if cid not in current_scores:
+                current_scores[cid] = 0.0
             
         for cid in candidates:
              submission_rows.append({

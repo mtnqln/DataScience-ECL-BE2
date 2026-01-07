@@ -1,0 +1,11 @@
+config,f1,auc_prob,auc_kaggle,method,direction,depth,alpha,beta,weight_metric,normalize_l2
+"Weighted Mean, In Only, PageRank",0.8549640287769784,0.9696168198757763,0.9154654244306419,weighted_mean,in,1,0.0,0.6,pagerank,True
+"Weighted Mean, Both, Degree",0.8282014388489208,0.9622484140786749,0.8993300207039338,weighted_mean,both,1,0.5,0.3,degree,True
+"Weighted Mean, Both, PageRank",0.8276258992805755,0.9622344761904762,0.8989830227743271,weighted_mean,both,1,0.5,0.3,pagerank,True
+"Attention, Both, Uniform",0.8267625899280575,0.9623684140786749,0.8984625258799173,attention,both,1,0.5,0.3,uniform,True
+"Baseline: Mean, Both, Uniform",0.8264748201438848,0.9624798840579711,0.8982890269151139,mean,both,1,0.5,0.3,uniform,True
+"Weighted Mean, Both, PageRank, Depth=2",0.8181294964028777,0.9578634782608695,0.8932575569358178,weighted_mean,both,2,0.4,0.2,pagerank,True
+"Max, Both, Uniform",0.8092086330935252,0.9584551635610766,0.8878790890269151,max,both,1,0.5,0.3,uniform,True
+"Attention, Out Only, Uniform",0.8057553956834532,0.9537769606625257,0.8857971014492754,attention,out,1,0.6,0.0,uniform,True
+"Max, Out Only, PageRank",0.8043165467625899,0.954064977225673,0.8849296066252589,max,out,1,0.5,0.0,pagerank,True
+"Weighted Mean, Out Only, PageRank",0.8025899280575539,0.9527842236024846,0.8838886128364389,weighted_mean,out,1,0.6,0.0,pagerank,True

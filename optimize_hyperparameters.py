@@ -58,20 +58,23 @@ def evaluate_config(queries, corpus, valid, embeddings_func, config_name):
     precision = precision_score(np.array(all_true_labels), np.array(all_pred_labels), average='binary')
     recall = recall_score(np.array(all_true_labels), np.array(all_pred_labels), average='binary')
     f1 = f1_score(np.array(all_true_labels), np.array(all_pred_labels), average='binary')
-    auc = roc_auc_score(np.array(all_true_labels), np.array(all_pred_continuous_labels))
+    auc_continuous = roc_auc_score(np.array(all_true_labels), np.array(all_pred_continuous_labels))
+    auc_binary = roc_auc_score(np.array(all_true_labels), np.array(all_pred_labels))
     
     print(f"\nRésultats:")
-    print(f"  Precision: {precision:.4f}")
-    print(f"  Recall:    {recall:.4f}")
-    print(f"  F1 Score:  {f1:.4f}")
-    print(f"  AUC:       {auc:.4f}")
+    print(f"  Precision:    {precision:.4f}")
+    print(f"  Recall:       {recall:.4f}")
+    print(f"  F1 Score:     {f1:.4f}")
+    print(f"  AUC (Prob):   {auc_continuous:.4f}")
+    print(f"  AUC (Kaggle): {auc_binary:.4f}")
     
     return {
         'config': config_name,
         'precision': precision,
         'recall': recall,
         'f1': f1,
-        'auc': auc
+        'auc_prob': auc_continuous,
+        'auc_kaggle': auc_binary
     }
 
 def main():
@@ -151,17 +154,18 @@ def main():
     print("RÉSULTATS COMPARATIFS")
     
     df = pd.DataFrame(results)
-    df = df.sort_values('f1', ascending=False)
+    df = df.sort_values('auc_kaggle', ascending=False) # Tri par AUC Kaggle !
     print("\n" + df.to_string(index=False))
     
     # Best configuration
     best = df.iloc[0]
-    print("MEILLEURE CONFIGURATION")
+    print("MEILLEURE CONFIGURATION (Selon AUC Kaggle)")
     print(f"Configuration: {best['config']}")
-    print(f"F1 Score: {best['f1']:.4f}")
-    print(f"AUC: {best['auc']:.4f}")
-    print(f"Precision: {best['precision']:.4f}")
-    print(f"Recall: {best['recall']:.4f}")
+    print(f"F1 Score:      {best['f1']:.4f}")
+    print(f"AUC (Kaggle):  {best['auc_kaggle']:.4f}")
+    print(f"AUC (Prob):    {best['auc_prob']:.4f}")
+    print(f"Precision:     {best['precision']:.4f}")
+    print(f"Recall:        {best['recall']:.4f}")
     
     # Save results
 if __name__ == "__main__":

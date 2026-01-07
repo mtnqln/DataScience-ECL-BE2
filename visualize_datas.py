@@ -10,8 +10,6 @@ if __name__=="__main__":
     print("Chargement du corpus...")
     corpus = load_corpus("data/corpus.jsonl")
     
-    # print("Préparation du texte...")
-    # corpus_text = prepare_for_vectorizer(corpus)
     
     print("Calcul des embeddings creux (TF-IDF)...")
     matrix, model = embeddings_creux(corpus)
@@ -41,9 +39,6 @@ if __name__=="__main__":
     print("\n--- 2. Distribution des 30 Mots les Plus Fréquents ---")
     print(word_distribution_df)
 
-    # ---------------------------------------------------------------------
-    # AFFICHAGE DE L'HISTOGRAMME
-    # ---------------------------------------------------------------------
     
     print("\n--- 3. Génération de l'Histogramme ---")
     

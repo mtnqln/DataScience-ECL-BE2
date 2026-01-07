@@ -78,9 +78,10 @@ def generate_predictions_optimized(queries, corpus, valid,
         best_scores = scores_sorted[:5]
         
         # C'est ici qu'on met à jour les scores pour créer le fichier de csv
+        # On utilise les scores de similarité cosinus CONTINUS au lieu de binaire (0/1)
         for j, candidate_id in enumerate(query_candidates_id):
             valid.loc[(valid['query-id'] == query_id) & (valid['corpus-id'] == candidate_id), 'score'] = \
-                1 if scores[j] in best_scores else 0
+                scores[j]  # Garder les valeurs de similarité cosinus
     
     if output_file is None:
         output_file = 'submissions/sample_submission_predicted_optimized.csv'
@@ -91,9 +92,6 @@ def generate_predictions_optimized(queries, corpus, valid,
     # Statistiques
 
     print(f"Total de prédictions: {len(valid)}")
-    print(f"Prédictions positives: {(valid['score'] == 1).sum()}")
-    print(f"Prédictions négatives: {(valid['score'] == 0).sum()}")
-    print(f"Ratio positif: {(valid['score'] == 1).sum() / len(valid):.2%}")
     
     return valid
 
