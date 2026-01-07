@@ -33,6 +33,12 @@ Modifiez ces valeurs selon vos besoins (ex: alpha=0.3, beta=0.5)
 Sauvegardez le fichier
 Lancez ensuite : python main.py
 
-**Pour utiliser le model GCN :**
+**Pour utiliser le model GCN , creux , dense :**
 
 - Tapez dans un terminal : python run_gcn.py
+- Taper dans le terminal : python run_sparse.py
+- Taper dans le terminal : python run_dense.py
+
+**Pour visualiser la distribution des mots par LDA**
+
+- Tapez dans un terminal : python visualize_datas.py
