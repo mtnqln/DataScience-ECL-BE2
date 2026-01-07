@@ -218,9 +218,9 @@ def sample_prediction(queries, corpus, valid, model_type='dense'):
         scores_sorted = np.sort(scores)[::-1]
         best_scores = scores_sorted[:5]
 
+        # Utiliser les scores de similarité cosinus continus au lieu de binaire (0/1)
         for i, candidate_id in enumerate(query_candidates_id): 
-            valid.loc[(valid['query-id'] == query_id) & (valid['corpus-id'] == candidate_id), 'score'] = 1 if scores[i] in best_scores else 0
-            # valid.loc[(valid['query-id'] == query_id) & (valid['corpus-id'] == candidate_id), 'score'] = scores[i]
+            valid.loc[(valid['query-id'] == query_id) & (valid['corpus-id'] == candidate_id), 'score'] = scores[i]
     
     valid.to_csv('data/sample_submission_predicted.csv', index=False)
 
@@ -288,8 +288,9 @@ def sample_prediction_graph(queries, corpus, valid, model_type='dense'):
         scores_sorted = np.sort(scores)[::-1]
         best_scores = scores_sorted[:5]
 
+        # Utiliser les scores de similarité cosinus continus au lieu de binaire (0/1)
         for i, candidate_id in enumerate(query_candidates_id): 
-            valid.loc[(valid['query-id'] == query_id) & (valid['corpus-id'] == candidate_id), 'score'] = 1 if scores[i] in best_scores else 0
+            valid.loc[(valid['query-id'] == query_id) & (valid['corpus-id'] == candidate_id), 'score'] = scores[i]
     
     output_file = 'data/sample_submission_predicted.csv'
     valid.to_csv(output_file, index=False)

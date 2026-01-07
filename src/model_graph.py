@@ -219,6 +219,238 @@ def improve_embedding_advanced(corpus_embeddings, G: nx.DiGraph, id_to_index,
     return graph_embeddings
 
 
+def aggregate_neighbors_advanced(
+    corpus_embeddings, 
+    G: nx.DiGraph, 
+    id_to_index,
+    method: str = 'weighted_mean',
+    depth: int = 1,
+    direction: str = 'both',
+    alpha: float = 0.5,
+    beta: float = 0.3,
+    weight_metric: str = 'pagerank',
+    normalize_l2: bool = True
+):
+    """
+    Agrégation flexible et avancée des voisins dans le graphe de citations.
+    
+    Cette fonction offre plusieurs stratégies d'agrégation pour améliorer les embeddings
+    en exploitant la structure du graphe de citations de différentes manières.
+    
+    Args:
+        corpus_embeddings: Embeddings originaux des documents (numpy array)
+        G: Graphe de citations (NetworkX DiGraph)
+        id_to_index: Mapping ID document -> index dans embeddings
+        method: Méthode d'agrégation
+            - 'mean': Moyenne simple des voisins
+            - 'weighted_mean': Moyenne pondérée selon weight_metric
+            - 'max': Maximum élément par élément
+            - 'attention': Attention basée sur similarité cosinus
+        depth: Profondeur de propagation (nombre de sauts dans le graphe)
+        direction: Direction de traversée
+            - 'in': Seulement les articles citants (predecessors)
+            - 'out': Seulement les articles cités/références (successors)
+            - 'both': Citations ET références
+        alpha: Poids pour les références si direction='both' ou 'out'
+        beta: Poids pour les citations si direction='both' ou 'in'
+        weight_metric: Métrique de pondération pour weighted_mean
+            - 'uniform': Poids uniformes (équivaut à mean)
+            - 'pagerank': Pondération par score PageRank
+            - 'degree': Pondération par degré du nœud
+            - 'inverse_degree': Pondération inversement proportionnelle au degré
+        normalize_l2: Si True, applique normalisation L2 aux embeddings finaux
+        
+    Returns:
+        Enhanced embeddings avec la stratégie d'agrégation choisie
+    """
+    from sklearn.preprocessing import normalize
+    from sklearn.metrics.pairwise import cosine_similarity
+    
+    graph_embeddings = np.copy(corpus_embeddings)
+    
+    print(f"\n=== Agrégation avancée des voisins ===")
+    print(f"  - Méthode: {method}")
+    print(f"  - Direction: {direction}")
+    print(f"  - Profondeur: {depth}")
+    print(f"  - Métrique de poids: {weight_metric}")
+    if direction == 'both':
+        print(f"  - Alpha (références): {alpha}")
+        print(f"  - Beta (citations): {beta}")
+    elif direction == 'out':
+        print(f"  - Alpha (références): {alpha}")
+    elif direction == 'in':
+        print(f"  - Beta (citations): {beta}")
+    
+    # Calcul des métriques de pondération si nécessaire
+    weight_scores = None
+    if weight_metric == 'pagerank':
+        print("  - Calcul du PageRank...")
+        weight_scores = nx.pagerank(G, alpha=0.85)
+    elif weight_metric == 'degree':
+        weight_scores = dict(G.degree())
+    elif weight_metric == 'inverse_degree':
+        degree_dict = dict(G.degree())
+        weight_scores = {node: 1.0 / (deg + 1) for node, deg in degree_dict.items()}
+    
+    nodes_improved = 0
+    
+    for doc_id in G.nodes():
+        if doc_id not in id_to_index:
+            continue
+        
+        current_idx = id_to_index[doc_id]
+        
+        # Collecter les voisins selon la direction et la profondeur
+        neighbors_out = []
+        neighbors_in = []
+        
+        if depth == 1:
+            # Voisins directs
+            if direction in ['out', 'both']:
+                neighbors_out = [n for n in G.successors(doc_id) if n in id_to_index]
+            if direction in ['in', 'both']:
+                neighbors_in = [n for n in G.predecessors(doc_id) if n in id_to_index]
+        else:
+            # Voisins à depth sauts (BFS)
+            if direction in ['out', 'both']:
+                neighbors_out = _get_k_hop_neighbors(G, doc_id, depth, 'out', id_to_index)
+            if direction in ['in', 'both']:
+                neighbors_in = _get_k_hop_neighbors(G, doc_id, depth, 'in', id_to_index)
+        
+        # Agréger selon la méthode choisie
+        new_vec = corpus_embeddings[current_idx].copy()
+        total_weight = 1.0
+        
+        # Traiter les références (out)
+        if neighbors_out:
+            aggregated_out = _aggregate_embeddings(
+                corpus_embeddings,
+                [id_to_index[n] for n in neighbors_out],
+                neighbors_out,
+                method,
+                weight_metric,
+                weight_scores,
+                current_idx,
+                corpus_embeddings
+            )
+            
+            if aggregated_out is not None:
+                if direction == 'both':
+                    new_vec = new_vec + alpha * aggregated_out
+                    total_weight += alpha
+                else:  # direction == 'out'
+                    new_vec = new_vec + alpha * aggregated_out
+                    total_weight += alpha
+        
+        # Traiter les citations (in)
+        if neighbors_in:
+            aggregated_in = _aggregate_embeddings(
+                corpus_embeddings,
+                [id_to_index[n] for n in neighbors_in],
+                neighbors_in,
+                method,
+                weight_metric,
+                weight_scores,
+                current_idx,
+                corpus_embeddings
+            )
+            
+            if aggregated_in is not None:
+                if direction == 'both':
+                    new_vec = new_vec + beta * aggregated_in
+                    total_weight += beta
+                else:  # direction == 'in'
+                    new_vec = new_vec + beta * aggregated_in
+                    total_weight += beta
+        
+        # Normaliser
+        if total_weight > 1.0:
+            new_vec = new_vec / total_weight
+            graph_embeddings[current_idx] = new_vec
+            nodes_improved += 1
+    
+    # Normalisation L2 finale
+    if normalize_l2:
+        print("  - Application de la normalisation L2...")
+        graph_embeddings = normalize(graph_embeddings, norm='l2', axis=1)
+    
+    print(f"✓ Embeddings améliorés: {nodes_improved}/{len(G.nodes())} nœuds")
+    
+    return graph_embeddings
+
+
+def _get_k_hop_neighbors(G, node, k, direction, id_to_index):
+    """Récupère les voisins à k sauts dans la direction spécifiée."""
+    neighbors = set()
+    
+    if direction == 'out':
+        # Utiliser successors (références)
+        try:
+            paths = nx.single_source_shortest_path_length(G, node, cutoff=k)
+            neighbors = {n for n, dist in paths.items() if 0 < dist <= k and n in id_to_index}
+        except nx.NodeNotFound:
+            pass
+    elif direction == 'in':
+        # Utiliser predecessors (citations) - inverser le graphe
+        try:
+            paths = nx.single_source_shortest_path_length(G.reverse(copy=False), node, cutoff=k)
+            neighbors = {n for n, dist in paths.items() if 0 < dist <= k and n in id_to_index}
+        except nx.NodeNotFound:
+            pass
+    
+    return list(neighbors)
+
+
+def _aggregate_embeddings(corpus_embeddings, neighbor_indices, neighbor_ids, method, 
+                          weight_metric, weight_scores, current_idx, all_embeddings):
+    """
+    Agrège les embeddings des voisins selon la méthode spécifiée.
+    
+    Returns:
+        Aggregated embedding vector ou None si pas de voisins
+    """
+    if not neighbor_indices:
+        return None
+    
+    neighbor_vecs = corpus_embeddings[neighbor_indices]
+    
+    if method == 'mean':
+        return np.mean(neighbor_vecs, axis=0)
+    
+    elif method == 'weighted_mean':
+        if weight_metric == 'uniform' or weight_scores is None:
+            return np.mean(neighbor_vecs, axis=0)
+        else:
+            # Pondération selon la métrique
+            weights = np.array([weight_scores.get(nid, 1.0) for nid in neighbor_ids])
+            if weights.sum() > 0:
+                weights = weights / weights.sum()  # Normaliser
+                return np.average(neighbor_vecs, axis=0, weights=weights)
+            else:
+                return np.mean(neighbor_vecs, axis=0)
+    
+    elif method == 'max':
+        # Maximum élément par élément
+        return np.max(neighbor_vecs, axis=0)
+    
+    elif method == 'attention':
+        # Attention simple basée sur similarité cosinus
+        from sklearn.metrics.pairwise import cosine_similarity
+        
+        current_vec = all_embeddings[current_idx].reshape(1, -1)
+        # Calculer similarités
+        similarities = cosine_similarity(current_vec, neighbor_vecs).flatten()
+        
+        # Softmax pour obtenir des poids d'attention
+        exp_sim = np.exp(similarities - np.max(similarities))  # Stabilité numérique
+        attention_weights = exp_sim / exp_sim.sum()
+        
+        # Moyenne pondérée par attention
+        return np.average(neighbor_vecs, axis=0, weights=attention_weights)
+    
+    else:
+        raise ValueError(f"Méthode inconnue: {method}")
+
 
 if __name__=="__main__":
     corpus: Dict[str, Dict] = load_corpus("data/corpus.jsonl")

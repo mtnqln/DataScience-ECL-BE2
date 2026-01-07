@@ -20,8 +20,8 @@ def main(ouput_file=None):
         valid=sample_submission.copy(),
         alpha=0,
         beta=1,
-        use_pagerank=True,
-        normalize_l2=True,
+        use_pagerank=False,
+        normalize_l2=False,
         output_file=ouput_file
     )
     

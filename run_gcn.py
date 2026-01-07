@@ -1,6 +1,7 @@
 import torch
 import numpy as np
 import pandas as pd
+import networkx as nx
 from src.handle_data import load_corpus, load_queries, load_qrels
 from src.prepare_data import embeddings_dense, embedding_query_dense
 from src.model_graph import build_graph
@@ -9,11 +10,12 @@ from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.metrics import f1_score, roc_auc_score
 
 def run_gcn_pipeline():
-    print("--- Démarrage de la pipeline GCN (Optimisation Multi-sauts) ---")
+    print("--- Démarrage de la pipeline GCN + PageRank Boost ---")
     
     corpus = load_corpus("data/corpus.jsonl")
     queries = load_queries("data/queries.jsonl")
-    valid = load_qrels("data/valid.tsv")
+    valid = load_qrels("data/valid.tsv")  # Pour l'évaluation
+    sample_submission = pd.read_csv("data/sample_submission.csv")  # Template pour la soumission
     
     print("Chargement des embeddings initiaux...")
     embeddings, _, _, embedding_model = embeddings_dense(corpus) # on ignore les lda features
@@ -30,6 +32,10 @@ def run_gcn_pipeline():
     G = build_graph(corpus)
     corpus_ids = list(corpus.keys())
     
+    # Calcul du PageRank
+    print("Calcul du PageRank pour le boosting...")
+    pagerank_scores = nx.pagerank(G, alpha=0.85)
+    
     # Initialisation GCN
     gcn = SimpleGCN(input_dim=features.shape[1], hidden_dim=features.shape[1]).to(device)
     
@@ -37,7 +43,7 @@ def run_gcn_pipeline():
     adj = gcn.get_adjacency_matrix(G, corpus_ids).to(device)
     
     # Propagation (Forward Pass)
-    k_hops = 3
+    k_hops = 2
     print(f"Propagation des features sur {k_hops} sauts...")
     
     with torch.no_grad():
@@ -48,7 +54,7 @@ def run_gcn_pipeline():
     from sklearn.preprocessing import normalize
     embeddings_final = normalize(embeddings_final, norm='l2', axis=1)
     
-    print("Génération des prédictions")
+    print("Génération des prédictions (avec PageRank Boost)")
     
     id_to_index = {doc_id: idx for idx, doc_id in enumerate(corpus_ids)}
     
@@ -56,18 +62,17 @@ def run_gcn_pipeline():
     all_pred_continuous = []
     all_pred_labels = []
     
+    # Paramètre de boost PageRank
+    PR_BOOST_FACTOR = 100.0 # Facteur expérimental pour donner du poids au PR (les scores PR sont très petits, ex 1e-4)
+
     for query_id in valid.keys():
         query = queries[query_id]
         query_text = query['text']
-        
-        # Pour la requête, on commence par son embedding dense
-        # Si la requête est dans le graphe, on prend son embedding lissé 
         
         if query_id in id_to_index:
             query_idx = id_to_index[query_id]
             query_vector = embeddings_final[query_idx:query_idx+1]
         else:
-            # Sinon (cas rare/impossible dans valid?), on prend le dense pur
             query_vector = embedding_query_dense(query_text, None, None, embedding_model)
         
         candidates_ids = list(valid[query_id].keys())
@@ -79,17 +84,22 @@ def run_gcn_pipeline():
         cand_indices = [id_to_index[cid] for cid in candidates_ids]
         cand_vectors = embeddings_final[cand_indices]
         
-        # Similarité
+        # Similarité Cosinus
         sims = cosine_similarity(query_vector, cand_vectors).flatten()
         
-        # Ranking
-        top5_indices = np.argsort(sims)[-5:]
+        # Integration PageRank
+        # Score final = Sim * (1 + Factor * PR)
+        pr_values = np.array([pagerank_scores.get(cid, 0) for cid in candidates_ids])
+        final_scores = sims * (1 + PR_BOOST_FACTOR * pr_values)
+        
+        # Ranking basé sur le score final fusionné
+        top5_indices = np.argsort(final_scores)[-5:]
         top5_ids = [candidates_ids[i] for i in top5_indices]
         
         # Metrics accumulation
         for i, cid in enumerate(candidates_ids):
             true_label = valid[query_id][cid]
-            score = sims[i]
+            score = final_scores[i] # Utilisation du score boosté
             pred_label = 1 if cid in top5_ids else 0
             
             all_true_labels.append(true_label)
@@ -99,79 +109,63 @@ def run_gcn_pipeline():
            
     # Calcul des métriques
     f1 = f1_score(all_true_labels, all_pred_labels)
-    auc = roc_auc_score(all_true_labels, all_pred_continuous)
+    auc_continuous = roc_auc_score(all_true_labels, all_pred_continuous)
+    auc_binary = roc_auc_score(all_true_labels, all_pred_labels)
     
-    print("\n" + "="*50)
-    print(f"RÉSULTATS GCN (k={k_hops})")
-    print("="*50)
-    print(f"F1 Score: {f1:.4f}")
-    print(f"AUC:      {auc:.4f}")
+    print(f"RÉSULTATS GCN + PageRank Boost (k={k_hops})")
+    print(f"F1 Score:       {f1:.4f}")
+    print(f"AUC (Prob):     {auc_continuous:.4f} (Potentiel max)")
+    print(f"AUC (Kaggle):   {auc_binary:.4f} (Estimation sur 0/1)")
     
-    print("\nGénération du fichier de soumission 'data/sample_submission_gcn.csv'...")
+    print(f"\nGénération des prédictions pour {len(sample_submission['query-id'].unique())} requêtes de test...")
     
-    # Construction de la soumission basée sur les paires dans valid
-    submission_rows = []
-    queries_ids = list(valid.keys())
-    print(f"Prédictions pour {len(queries_ids)} requêtes...")
-
-    for qid in queries_ids:
-        # 1. Get query vector
-        if str(qid) in queries:
-            query_text = queries[str(qid)]['text']
-            
-            if qid in id_to_index:
-                 q_idx = id_to_index[qid]
-                 q_vec = embeddings_final[q_idx:q_idx+1]
-            else:
-                 q_vec = embedding_query_dense(query_text, None, None, embedding_model)
+    # Parcourir chaque requête du template de soumission
+    for i, query_id in enumerate(sample_submission['query-id'].unique()):
+        if (i + 1) % 50 == 0:
+            print(f"  Progression: {i+1}/{len(sample_submission['query-id'].unique())} requêtes")
+        
+        query = queries[query_id]
+        query_text = query['text']
+        
+        # Utiliser l'embedding du graphe si la requête est dans le corpus
+        if query_id in id_to_index:
+            query_idx = id_to_index[query_id]
+            query_vector = embeddings_final[query_idx:query_idx+1]
         else:
-             continue
-             
-        # 2. Get candidates for this query from valid dict
-        candidates = list(valid[qid].keys())
+            query_vector = embedding_query_dense(query_text, None, None, embedding_model)
         
-        # 3. Get candidate vectors
-        valid_cands_idx = []
-        valid_cands_pos = [] 
+        # Récupérer les candidats pour cette requête
+        query_candidates_id = sample_submission[sample_submission['query-id'] == query_id]['corpus-id'].tolist()
+        candidate_index = [corpus_ids.index(candidate_id) for candidate_id in query_candidates_id]
+        query_candidate_vectors = embeddings_final[candidate_index]
         
-        for pos, cid in enumerate(candidates):
-            if cid in id_to_index:
-                valid_cands_idx.append(id_to_index[cid])
-                valid_cands_pos.append(pos)
-                
-        if not valid_cands_idx:
-            for cid in candidates:
-                submission_rows.append({'query-id': qid, 'corpus-id': cid, 'score': 0})
-            continue
-            
-        cand_vecs = embeddings_final[valid_cands_idx]
-        sims = cosine_similarity(q_vec, cand_vecs).flatten()
+        # Calcul de similarité
+        similarity_matrix = cosine_similarity(query_vector, query_candidate_vectors)
+        scores = similarity_matrix.flatten()
         
-        # 5. Determine top 5
-        sorted_indices_local = np.argsort(sims)[::-1]
-        top5_local_indices = sorted_indices_local[:5]
-        top5_positions = [valid_cands_pos[idx] for idx in top5_local_indices]
+        # Application du boost PageRank
+        pr_values = np.array([pagerank_scores.get(cid, 0) for cid in query_candidates_id])
+        final_scores = scores * (1 + PR_BOOST_FACTOR * pr_values)
         
-        # 6. Store results
-        current_scores = {cid: 0 for cid in candidates}
-        for pos in top5_positions:
-            current_scores[candidates[pos]] = 1
-            
-        for cid in candidates:
-             submission_rows.append({'query-id': qid, 'corpus-id': cid, 'score': current_scores[cid]})
-
-    submission_df = pd.DataFrame(submission_rows)
-    # Ajout de RowId
-    submission_df.insert(0, 'RowId', range(len(submission_df)))
-    # Vérification colonnes
-    submission_df = submission_df[['RowId', 'query-id', 'corpus-id', 'score']]
+        # Sélection des 5 meilleurs
+        scores_sorted = np.sort(final_scores)[::-1]
+        best_scores = scores_sorted[:5]
+        
+        # Mise à jour des scores dans le DataFrame de soumission
+        # On utilise les scores CONTINUS (similarité cosinus avec boost PageRank) au lieu de binaire (0/1)
+        for j, candidate_id in enumerate(query_candidates_id):
+            sample_submission.loc[(sample_submission['query-id'] == query_id) & (sample_submission['corpus-id'] == candidate_id), 'score'] = \
+                final_scores[j]  # Garder les valeurs continues de similarité
 
     output_file = "submissions/sample_submission_gcn.csv"
-    submission_df.to_csv(output_file, index=False)
-    print(f"Fichier sauvegardé avec succès: {output_file}")
-    print(f"Colonnes générées : {list(submission_df.columns)}")
+    sample_submission.to_csv(output_file, index=False)
+    print(f"\nFichier sauvegardé: {output_file}")
+    print(f"Total de prédictions: {len(sample_submission)}")
+    print(f"Prédictions positives (score=1): {(sample_submission['score'] == 1).sum()}")
+    print(f"Prédictions négatives (score=0): {(sample_submission['score'] == 0).sum()}")
     
-    return f1, auc
+    return f1, auc_binary, auc_continuous
 
 if __name__ == "__main__":
     run_gcn_pipeline()
+
